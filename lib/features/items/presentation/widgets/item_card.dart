@@ -14,227 +14,179 @@ class ItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final timeLeft = _getTimeLeft();
     final isEndingSoon = timeLeft.inHours < 2;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 768 && screenWidth <= 1200;
-    final isMobile = screenWidth <= 768;
 
-    return Card(
-      elevation: 2,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 이미지 영역 (흰색 배경)
-            Container(
-              width: double.infinity,
-              height: isMobile
-                  ? 180
-                  : isTablet
-                  ? 220
-                  : 260,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(8),
-                  topRight: Radius.circular(8),
+    return SizedBox(
+      width: 280,
+      height: 380,
+      child: Card(
+        elevation: 2,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 이미지 영역 (흰색 배경)
+              Container(
+                width: double.infinity,
+                height: 200,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    topRight: Radius.circular(8),
+                  ),
                 ),
-              ),
-              child: Stack(
-                children: [
-                  _buildImageWidget(context),
-                  // 마감 임박 배지
-                  if (isEndingSoon)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '마감임박',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: isMobile
-                                ? 8
-                                : isTablet
-                                ? 10
-                                : 12,
-                            fontWeight: FontWeight.bold,
+                child: Stack(
+                  children: [
+                    _buildImageWidget(context),
+                    // 마감 임박 배지
+                    if (isEndingSoon)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '마감임박',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                ],
-              ),
-            ),
-            // 정보 영역 (어두운 배경)
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(
-                isMobile
-                    ? 8
-                    : isTablet
-                    ? 12
-                    : 16,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(8),
-                  bottomRight: Radius.circular(8),
+                  ],
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 제목
-                  Text(
-                    item.title,
-                    style: TextStyle(
-                      fontSize: isMobile
-                          ? 12
-                          : isTablet
-                          ? 14
-                          : 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+              // 정보 영역 (어두운 배경)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[900],
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(8),
+                    bottomRight: Radius.circular(8),
                   ),
-                  const SizedBox(height: 8),
-
-                  // 가격 정보
-                  Row(
-                    children: [
-                      Text(
-                        '${NumberFormat('#,###').format(item.auction?.currentPrice ?? item.auction?.startPrice ?? 0)}원',
-                        style: TextStyle(
-                          fontSize: isMobile
-                              ? 16
-                              : isTablet
-                              ? 18
-                              : 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 제목
+                    Text(
+                      item.title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
-                      if (item.auction?.buyNowPrice != null) ...[
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+
+                    // 가격 정보
+                    Row(
+                      children: [
+                        Text(
+                          '${NumberFormat('#,###').format(item.auction?.currentPrice ?? item.auction?.startPrice ?? 0)}원',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        if (item.auction?.buyNowPrice != null) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            '즉시구매가',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+
+                    // 종류와 크기
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[800],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            item.species,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
                         const SizedBox(width: 8),
                         Text(
-                          '즉시구매가',
+                          item.style,
                           style: TextStyle(
-                            fontSize: isMobile
-                                ? 10
-                                : isTablet
-                                ? 12
-                                : 14,
+                            fontSize: 12,
                             color: Colors.grey[400],
                           ),
                         ),
                       ],
-                    ],
-                  ),
-                  const SizedBox(height: 8),
+                    ),
+                    const SizedBox(height: 3),
 
-                  // 종류와 크기
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                    // 크기 정보
+                    Text(
+                      '${item.heightCm.toInt()}cm • ${item.crownWidthCm.toInt()}cm',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                    ),
+                    const SizedBox(height: 6),
+
+                    // 남은 시간
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.schedule,
+                          size: 16,
+                          color: isEndingSoon ? Colors.red : Colors.grey[400],
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[800],
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          item.species,
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatTimeLeft(timeLeft),
                           style: TextStyle(
-                            fontSize: isMobile
-                                ? 10
-                                : isTablet
-                                ? 12
-                                : 14,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                            color: isEndingSoon ? Colors.red : Colors.grey[400],
+                            fontWeight: isEndingSoon
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        item.style,
-                        style: TextStyle(
-                          fontSize: isMobile
-                              ? 10
-                              : isTablet
-                              ? 12
-                              : 14,
-                          color: Colors.grey[400],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-
-                  // 크기 정보
-                  Text(
-                    '${item.heightCm.toInt()}cm • ${item.crownWidthCm.toInt()}cm',
-                    style: TextStyle(
-                      fontSize: isMobile
-                          ? 10
-                          : isTablet
-                          ? 12
-                          : 14,
-                      color: Colors.grey[400],
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // 남은 시간
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.schedule,
-                        size: isMobile
-                            ? 14
-                            : isTablet
-                            ? 16
-                            : 18,
-                        color: isEndingSoon ? Colors.red : Colors.grey[400],
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _formatTimeLeft(timeLeft),
-                        style: TextStyle(
-                          fontSize: isMobile
-                              ? 10
-                              : isTablet
-                              ? 12
-                              : 14,
-                          color: isEndingSoon ? Colors.red : Colors.grey[400],
-                          fontWeight: isEndingSoon
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

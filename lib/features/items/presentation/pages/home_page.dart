@@ -3,9 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/items_provider.dart';
 import '../widgets/item_card.dart';
-import '../../../../shared/widgets/loading_widget.dart';
-import '../../../../shared/widgets/error_widget.dart';
-import '../../../../shared/widgets/empty_widget.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -51,7 +48,6 @@ class _HomePageState extends ConsumerState<HomePage>
 
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth > 1200;
-    final isTablet = screenWidth > 768 && screenWidth <= 1200;
 
     return Scaffold(
       appBar: AppBar(
@@ -281,59 +277,42 @@ class _HomePageState extends ConsumerState<HomePage>
 
   Widget _buildItemsList(List items, {bool isDesktop = false}) {
     final screenWidth = MediaQuery.of(context).size.width;
-    int crossAxisCount;
-    double childAspectRatio;
-    double crossAxisSpacing;
-    double mainAxisSpacing;
+    double spacing;
 
-    if (isDesktop) {
-      crossAxisCount = 4;
-      childAspectRatio = 0.75;
-      crossAxisSpacing = 24;
-      mainAxisSpacing = 24;
+    if (screenWidth > 1200) {
+      spacing = 20;
     } else if (screenWidth > 768) {
-      crossAxisCount = 3;
-      childAspectRatio = 0.8;
-      crossAxisSpacing = 20;
-      mainAxisSpacing = 20;
+      spacing = 16;
     } else if (screenWidth > 480) {
-      crossAxisCount = 2;
-      childAspectRatio = 0.85;
-      crossAxisSpacing = 12;
-      mainAxisSpacing = 12;
+      spacing = 12;
     } else {
-      // 매우 작은 화면 (480px 이하)
-      crossAxisCount = 1;
-      childAspectRatio = 1.2;
-      crossAxisSpacing = 8;
-      mainAxisSpacing = 8;
+      spacing = 8;
     }
 
     return Container(
       padding: EdgeInsets.all(
-        isDesktop ? 32 : 
-        screenWidth > 768 ? 20 : 
-        screenWidth > 480 ? 12 : 8
+        screenWidth > 1200
+            ? 32
+            : screenWidth > 768
+            ? 20
+            : screenWidth > 480
+            ? 12
+            : 8,
       ),
-      child: GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossAxisCount,
-          childAspectRatio: childAspectRatio,
-          crossAxisSpacing: crossAxisSpacing,
-          mainAxisSpacing: mainAxisSpacing,
+      child: SingleChildScrollView(
+        child: Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: items.map((item) {
+            return ItemCard(
+              item: item,
+              onTap: () => context.push('/items/${item.id}'),
+            );
+          }).toList(),
         ),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final item = items[index];
-          return ItemCard(
-            item: item,
-            onTap: () => context.push('/items/${item.id}'),
-          );
-        },
       ),
     );
   }
-
 
   Widget _buildEmptyState({
     required String message,

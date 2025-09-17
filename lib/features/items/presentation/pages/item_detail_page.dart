@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
 import '../providers/items_provider.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../../../../shared/widgets/error_widget.dart';
@@ -241,23 +242,83 @@ class _ItemDetailPageState extends ConsumerState<ItemDetailPage> {
             imageUrl = item.media[index - 1].url;
           }
 
-          return CachedNetworkImage(
-            imageUrl: imageUrl,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => Container(
-              color: Colors.grey[200],
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-            errorWidget: (context, url, error) => Container(
-              color: Colors.grey[200],
-              child: const Icon(
-                Icons.image_not_supported,
-                color: Colors.grey,
-                size: 50,
-              ),
-            ),
-          );
+          return _buildImageWidget(context, imageUrl);
         },
+      ),
+    );
+  }
+
+  Widget _buildImageWidget(BuildContext context, String imageUrl) {
+    // 이미지 URL이 비어있는 경우
+    if (imageUrl.isEmpty) {
+      return _buildErrorWidget(context);
+    }
+
+    // Base64 이미지인지 확인 (data:image로 시작하는지 체크)
+    if (imageUrl.startsWith('data:image/') ||
+        (imageUrl.isNotEmpty && !imageUrl.startsWith('http'))) {
+      // Base64 이미지 처리
+      try {
+        String base64String = imageUrl;
+        if (base64String.startsWith('data:image/')) {
+          base64String = base64String.split(',')[1];
+        }
+
+        // Base64 문자열이 유효한지 확인
+        if (base64String.isEmpty) {
+          return _buildErrorWidget(context);
+        }
+
+        final bytes = base64Decode(base64String);
+        if (bytes.isEmpty) {
+          return _buildErrorWidget(context);
+        }
+
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) {
+            print('Base64 image decode error: $error');
+            return _buildErrorWidget(context);
+          },
+        );
+      } catch (e) {
+        print('Base64 image processing error: $e');
+        return _buildErrorWidget(context);
+      }
+    } else {
+      // URL 이미지 처리
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        placeholder: (context, url) => Container(
+          color: Colors.grey[200],
+          child: const Center(child: CircularProgressIndicator()),
+        ),
+        errorWidget: (context, url, error) {
+          print('Network image error: $error');
+          return _buildErrorWidget(context);
+        },
+      );
+    }
+  }
+
+  Widget _buildErrorWidget(BuildContext context) {
+    return Container(
+      color: Colors.grey[200],
+      child: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.image_not_supported, color: Colors.grey, size: 50),
+            SizedBox(height: 8),
+            Text('이미지를 불러올 수 없습니다', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
       ),
     );
   }

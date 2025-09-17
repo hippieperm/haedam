@@ -26,7 +26,7 @@ class MyApp extends ConsumerWidget {
       color: Colors.black, // 좌우 여백 색상 지정
       child: Center(
         child: SizedBox(
-          width: 1800,
+          width: 1000,
           child: MaterialApp.router(
             title: '해담',
             theme: AppTheme.darkTheme,

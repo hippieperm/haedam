@@ -22,11 +22,19 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
 
-    return MaterialApp.router(
-      title: '해담',
-      theme: AppTheme.darkTheme,
-      routerConfig: router,
-      debugShowCheckedModeBanner: false,
+    return Container(
+      color: Colors.black, // 좌우 여백 색상 지정
+      child: Center(
+        child: SizedBox(
+          width: 1800,
+          child: MaterialApp.router(
+            title: '해담',
+            theme: AppTheme.darkTheme,
+            routerConfig: router,
+            debugShowCheckedModeBanner: false,
+          ),
+        ),
+      ),
     );
   }
 }

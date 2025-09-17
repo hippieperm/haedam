@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
-import '../../data/models/item_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../shared/services/firebase_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -596,56 +596,49 @@ class _ItemUploadPageState extends ConsumerState<ItemUploadPage> {
       // 이미지 업로드
       final List<String> imageUrls = await _uploadImages();
 
-      // 상품 모델 생성
-      final item = ItemModel(
-        id: '', // Firestore에서 자동 생성
-        sellerId: currentUser.uid,
-        title: _titleController.text.trim(),
-        species: _speciesController.text.trim(),
-        style: _styleController.text.trim(),
-        sizeClass: _selectedSizeClass,
-        heightCm: double.parse(_heightController.text),
-        crownWidthCm: double.parse(_crownWidthController.text),
-        ageYearsEst: int.parse(_ageController.text),
-        healthNotes: _healthNotesController.text.trim().isEmpty
-            ? null
-            : _healthNotesController.text.trim(),
-        originNotes: _originNotesController.text.trim().isEmpty
-            ? null
-            : _originNotesController.text.trim(),
-        careHistory: _careHistoryController.text.trim().isEmpty
-            ? null
-            : _careHistoryController.text.trim(),
-        coverImageUrl: imageUrls.isNotEmpty ? imageUrls.first : '',
-        media: imageUrls.asMap().entries.map((entry) {
-          return MediaItem(url: entry.value, type: 'image', sort: entry.key);
+      // 상품 데이터 생성 (직접 Map 사용)
+      final now = DateTime.now();
+      final itemData = {
+        'sellerId': currentUser.uid,
+        'title': _titleController.text.trim(),
+        'species': _speciesController.text.trim(),
+        'style': _styleController.text.trim(),
+        'sizeClass': _selectedSizeClass,
+        'heightCm': double.parse(_heightController.text),
+        'crownWidthCm': double.parse(_crownWidthController.text),
+        'ageYearsEst': int.parse(_ageController.text),
+        if (_healthNotesController.text.trim().isNotEmpty)
+          'healthNotes': _healthNotesController.text.trim(),
+        if (_originNotesController.text.trim().isNotEmpty)
+          'originNotes': _originNotesController.text.trim(),
+        if (_careHistoryController.text.trim().isNotEmpty)
+          'careHistory': _careHistoryController.text.trim(),
+        'coverImageUrl': imageUrls.isNotEmpty ? imageUrls.first : '',
+        'media': imageUrls.asMap().entries.map((entry) {
+          return {'url': entry.value, 'type': 'image', 'sort': entry.key};
         }).toList(),
-        status: ItemStatus.draft,
-        auction: AuctionInfo(
-          startPrice: int.parse(_startPriceController.text),
-          bidStep: int.parse(_bidStepController.text),
-          reservePrice: _reservePriceController.text.isNotEmpty
-              ? int.parse(_reservePriceController.text)
-              : null,
-          buyNowPrice: _buyNowPriceController.text.isNotEmpty
-              ? int.parse(_buyNowPriceController.text)
-              : null,
-          startsAt: _auctionStartDate!,
-          endsAt: _auctionEndDate!,
-        ),
-        shipping: ShippingInfo(
-          method: ShippingMethod.values.firstWhere(
-            (e) => e.name == _selectedShippingMethod,
-          ),
-          feePolicy: _selectedFeePolicy,
-        ),
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
+        'status': 'DRAFT',
+        'auction': {
+          'startPrice': int.parse(_startPriceController.text),
+          'bidStep': int.parse(_bidStepController.text),
+          if (_reservePriceController.text.isNotEmpty)
+            'reservePrice': int.parse(_reservePriceController.text),
+          if (_buyNowPriceController.text.isNotEmpty)
+            'buyNowPrice': int.parse(_buyNowPriceController.text),
+          'startsAt': Timestamp.fromDate(_auctionStartDate!),
+          'endsAt': Timestamp.fromDate(_auctionEndDate!),
+        },
+        'shipping': {
+          'method': _selectedShippingMethod,
+          'feePolicy': _selectedFeePolicy,
+        },
+        'createdAt': Timestamp.fromDate(now),
+        'updatedAt': Timestamp.fromDate(now),
+      };
 
       // Firestore에 저장
       final docRef = await FirebaseService.instance.itemsCollection.add(
-        item.toJson(),
+        itemData,
       );
 
       // ID 업데이트

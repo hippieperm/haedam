@@ -36,7 +36,7 @@ class ItemCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     width: double.infinity,
                     placeholder: (context, url) => Container(
-                      color: Colors.grey[100],
+                      color: Theme.of(context).colorScheme.surface,
                       child: Center(
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
@@ -47,20 +47,24 @@ class ItemCard extends StatelessWidget {
                       ),
                     ),
                     errorWidget: (context, url, error) => Container(
-                      color: Colors.grey[100],
+                      color: Theme.of(context).colorScheme.surface,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
                             Icons.local_florist,
                             size: isDesktop ? 48 : 32,
-                            color: Colors.grey[400],
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.4),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             '이미지 없음',
                             style: TextStyle(
-                              color: Colors.grey[500],
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.6),
                               fontSize: isDesktop ? 14 : 12,
                             ),
                           ),
@@ -136,7 +140,7 @@ class ItemCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: isDesktop ? 16 : 12,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey[800],
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -175,7 +179,9 @@ class ItemCard extends StatelessWidget {
                             item.style,
                             style: TextStyle(
                               fontSize: isDesktop ? 12 : 9,
-                              color: Colors.grey[600],
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.7),
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -188,7 +194,9 @@ class ItemCard extends StatelessWidget {
                       '${item.heightCm.toInt()}cm • ${item.crownWidthCm.toInt()}cm',
                       style: TextStyle(
                         fontSize: isDesktop ? 12 : 9,
-                        color: Colors.grey[500],
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -201,13 +209,15 @@ class ItemCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: isEndingSoon
-                            ? Colors.red.shade50
-                            : Colors.grey.shade50,
+                            ? Colors.red.withOpacity(0.1)
+                            : Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
                           color: isEndingSoon
-                              ? Colors.red.shade200
-                              : Colors.grey.shade200,
+                              ? Colors.red.withOpacity(0.3)
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.outline.withOpacity(0.3),
                           width: 1,
                         ),
                       ),
@@ -217,7 +227,11 @@ class ItemCard extends StatelessWidget {
                           Icon(
                             Icons.schedule,
                             size: isDesktop ? 14 : 12,
-                            color: isEndingSoon ? Colors.red : Colors.grey[600],
+                            color: isEndingSoon
+                                ? Colors.red
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.6),
                           ),
                           const SizedBox(width: 3),
                           Flexible(
@@ -227,7 +241,9 @@ class ItemCard extends StatelessWidget {
                                 fontSize: isDesktop ? 12 : 9,
                                 color: isEndingSoon
                                     ? Colors.red
-                                    : Colors.grey[600],
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface.withOpacity(0.6),
                                 fontWeight: isEndingSoon
                                     ? FontWeight.bold
                                     : FontWeight.normal,

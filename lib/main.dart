@@ -24,7 +24,7 @@ class MyApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: '해담',
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.darkTheme,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

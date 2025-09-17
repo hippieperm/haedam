@@ -408,7 +408,7 @@ class _ItemDetailPageState extends ConsumerState<ItemDetailPage>
 
         return Image.memory(
           bytes,
-          fit: BoxFit.cover,
+          fit: BoxFit.contain,
           width: double.infinity,
           height: double.infinity,
           errorBuilder: (context, error, stackTrace) {
@@ -424,7 +424,7 @@ class _ItemDetailPageState extends ConsumerState<ItemDetailPage>
       // URL 이미지 처리
       return CachedNetworkImage(
         imageUrl: imageUrl,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain,
         width: double.infinity,
         height: double.infinity,
         placeholder: (context, url) => Container(

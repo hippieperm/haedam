@@ -301,6 +301,7 @@ class _HomePageState extends ConsumerState<HomePage>
       ),
       child: SingleChildScrollView(
         child: Wrap(
+          alignment: WrapAlignment.center,
           spacing: spacing,
           runSpacing: spacing,
           children: items.map((item) {

@@ -57,41 +57,38 @@ class ItemCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                  // 가격 오버레이
-                  Positioned(
-                    bottom: 8,
-                    left: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: FittedBox(
-                        child: Text(
-                          '${NumberFormat('#,###').format(item.auction?.currentPrice ?? item.auction?.startPrice ?? 0)}원',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: isDesktop ? 16 : 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
+              ),
+            ),
+            // 가격 표시 (이미지 아래로 이동)
+            Container(
+              width: double.infinity,
+              height: 50,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
+                ),
+              ),
+              child: FittedBox(
+                child: Text(
+                  '${NumberFormat('#,###').format(item.auction?.currentPrice ?? item.auction?.startPrice ?? 0)}원',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: isDesktop ? 16 : 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
             // 정보
             Expanded(
-              flex: 2,
+              flex: 1,
               child: Padding(
-                padding: EdgeInsets.all(isDesktop ? 16 : 8),
+                padding: EdgeInsets.all(isDesktop ? 12 : 6),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -109,15 +106,15 @@ class ItemCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     // 종류와 크기
                     Row(
                       children: [
                         Flexible(
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
+                              horizontal: 4,
+                              vertical: 1,
                             ),
                             decoration: BoxDecoration(
                               color: Theme.of(
@@ -151,7 +148,7 @@ class ItemCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     // 크기 정보
                     FittedBox(
                       child: Text(
@@ -169,8 +166,8 @@ class ItemCard extends StatelessWidget {
                     // 남은 시간
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
+                        horizontal: 4,
+                        vertical: 2,
                       ),
                       decoration: BoxDecoration(
                         color: isEndingSoon
@@ -231,6 +228,11 @@ class ItemCard extends StatelessWidget {
   }
 
   Widget _buildImageWidget(BuildContext context) {
+    // 이미지 URL이 비어있는 경우
+    if (item.coverImageUrl.isEmpty) {
+      return _buildErrorWidget(context);
+    }
+
     // Base64 이미지인지 확인 (data:image로 시작하는지 체크)
     if (item.coverImageUrl.startsWith('data:image/') ||
         (item.coverImageUrl.isNotEmpty &&
@@ -241,14 +243,29 @@ class ItemCard extends StatelessWidget {
         if (base64String.startsWith('data:image/')) {
           base64String = base64String.split(',')[1];
         }
+
+        // Base64 문자열이 유효한지 확인
+        if (base64String.isEmpty) {
+          return _buildErrorWidget(context);
+        }
+
+        final bytes = base64Decode(base64String);
+        if (bytes.isEmpty) {
+          return _buildErrorWidget(context);
+        }
+
         return Image.memory(
-          base64Decode(base64String),
+          bytes,
           fit: BoxFit.cover,
           width: double.infinity,
-          errorBuilder: (context, error, stackTrace) =>
-              _buildErrorWidget(context),
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) {
+            print('Base64 image decode error: $error');
+            return _buildErrorWidget(context);
+          },
         );
       } catch (e) {
+        print('Base64 image processing error: $e');
         return _buildErrorWidget(context);
       }
     } else {
@@ -257,6 +274,7 @@ class ItemCard extends StatelessWidget {
         imageUrl: item.coverImageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
+        height: double.infinity,
         placeholder: (context, url) => Container(
           color: Theme.of(context).colorScheme.surface,
           child: Center(
@@ -268,7 +286,10 @@ class ItemCard extends StatelessWidget {
             ),
           ),
         ),
-        errorWidget: (context, url, error) => _buildErrorWidget(context),
+        errorWidget: (context, url, error) {
+          print('Network image error: $error');
+          return _buildErrorWidget(context);
+        },
       );
     }
   }

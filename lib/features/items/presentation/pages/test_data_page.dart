@@ -34,7 +34,7 @@ class TestDataPage extends ConsumerWidget {
     try {
       final now = DateTime.now();
 
-      // 매우 간단한 데이터로 시작
+      // ItemModel과 완전히 호환되는 데이터 생성
       final itemData = {
         'id': 'test_item_1',
         'sellerId': 'test_seller',
@@ -48,6 +48,20 @@ class TestDataPage extends ConsumerWidget {
         'healthNotes': '건강한 상태',
         'coverImageUrl': 'https://via.placeholder.com/300x200',
         'status': 'LIVE',
+        'auction': {
+          'startPrice': 100000,
+          'bidStep': 10000,
+          'currentPrice': 100000,
+          'reservePrice': 500000,
+          'buyNowPrice': 1000000,
+          'startsAt': Timestamp.fromDate(now),
+          'endsAt': Timestamp.fromDate(now.add(const Duration(days: 7))),
+          'autoExtendMinutes': 2,
+          'currentBidId': null,
+          'currentBidderId': null,
+          'bidCount': 0,
+        },
+        'shipping': {'method': 'PICKUP', 'feePolicy': 'buyer'},
         'createdAt': Timestamp.fromDate(now),
         'updatedAt': Timestamp.fromDate(now),
         'media': [],

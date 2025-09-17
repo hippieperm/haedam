@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:typed_data';
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../../../../shared/services/firebase_service.dart';
@@ -37,12 +37,10 @@ class _ItemUploadPageState extends ConsumerState<ItemUploadPage> {
   DateTime? _auctionStartDate;
   DateTime? _auctionEndDate;
   List<XFile> _selectedImages = [];
-  List<Uint8List> _imageBytes = [];
+  List<String> _base64Images = []; // Base64 encoded images
   bool _isLoading = false;
 
   final List<String> _sizeClasses = ['소형', '중형', '대형', '특대형'];
-  final List<String> _shippingMethods = ['pickup', 'courier', 'freight'];
-  final List<String> _feePolicies = ['buyer', 'seller', 'split'];
 
   // 숫자 포맷팅을 위한 NumberFormat
   final NumberFormat _numberFormat = NumberFormat('#,###');
@@ -521,7 +519,7 @@ class _ItemUploadPageState extends ConsumerState<ItemUploadPage> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.memory(
-                          _imageBytes[index],
+                          base64Decode(_base64Images[index]),
                           width: 120,
                           height: 120,
                           fit: BoxFit.cover,
@@ -534,7 +532,7 @@ class _ItemUploadPageState extends ConsumerState<ItemUploadPage> {
                           onTap: () {
                             setState(() {
                               _selectedImages.removeAt(index);
-                              _imageBytes.removeAt(index);
+                              _base64Images.removeAt(index);
                             });
                           },
                           child: Container(
@@ -566,15 +564,16 @@ class _ItemUploadPageState extends ConsumerState<ItemUploadPage> {
     final List<XFile> images = await picker.pickMultiImage();
 
     if (images.isNotEmpty) {
-      final List<Uint8List> bytesList = [];
+      final List<String> base64List = [];
       for (final image in images) {
         final bytes = await image.readAsBytes();
-        bytesList.add(bytes);
+        final base64String = base64Encode(bytes);
+        base64List.add(base64String);
       }
 
       setState(() {
         _selectedImages.addAll(images);
-        _imageBytes.addAll(bytesList);
+        _base64Images.addAll(base64List);
       });
     }
   }
@@ -635,12 +634,12 @@ class _ItemUploadPageState extends ConsumerState<ItemUploadPage> {
         throw Exception('로그인이 필요합니다');
       }
 
-      // 이미지 업로드
-      final List<String> imageUrls = await _uploadImages();
+      // Base64 이미지 데이터 준비
+      final List<String> imageUrls = _base64Images;
 
       // 상품 데이터 생성 (직접 Map 사용)
       final now = DateTime.now();
-      final itemData = {
+      final itemData = <String, dynamic>{
         'sellerId': currentUser.uid,
         'title': _titleController.text.trim(),
         'species': _speciesController.text.trim(),
@@ -649,42 +648,64 @@ class _ItemUploadPageState extends ConsumerState<ItemUploadPage> {
         'heightCm': double.parse(_heightController.text),
         'crownWidthCm': double.parse(_crownWidthController.text),
         'ageYearsEst': int.parse(_ageController.text),
-        if (_healthNotesController.text.trim().isNotEmpty)
-          'healthNotes': _healthNotesController.text.trim(),
-        if (_originNotesController.text.trim().isNotEmpty)
-          'originNotes': _originNotesController.text.trim(),
-        if (_careHistoryController.text.trim().isNotEmpty)
-          'careHistory': _careHistoryController.text.trim(),
         'coverImageUrl': imageUrls.isNotEmpty ? imageUrls.first : '',
         'media': imageUrls.asMap().entries.map((entry) {
-          return {'url': entry.value, 'type': 'image', 'sort': entry.key};
+          return {
+            'url': entry.value,
+            'type': 'image',
+            'sort': entry.key,
+            'isBase64': true,
+          };
         }).toList(),
-        'status': 'DRAFT',
-        'auction': {
+        'status': 'LIVE',
+        'auction': <String, dynamic>{
           'startPrice': _parseFormattedNumber(_startPriceController.text),
           'bidStep': _parseFormattedNumber(_bidStepController.text),
-          if (_reservePriceController.text.isNotEmpty)
-            'reservePrice': _parseFormattedNumber(_reservePriceController.text),
-          if (_buyNowPriceController.text.isNotEmpty)
-            'buyNowPrice': _parseFormattedNumber(_buyNowPriceController.text),
+          'currentPrice': _parseFormattedNumber(_startPriceController.text),
           'startsAt': Timestamp.fromDate(_auctionStartDate!),
           'endsAt': Timestamp.fromDate(_auctionEndDate!),
+          'autoExtendMinutes': 2,
+          'bidCount': 0,
         },
-        'shipping': {
-          'method': _selectedShippingMethod,
+        'shipping': <String, dynamic>{
+          'method': _selectedShippingMethod.toUpperCase(),
           'feePolicy': _selectedFeePolicy,
         },
         'createdAt': Timestamp.fromDate(now),
         'updatedAt': Timestamp.fromDate(now),
       };
 
+      // 선택적 필드 추가 (null이 아닌 경우에만)
+      if (_healthNotesController.text.trim().isNotEmpty) {
+        itemData['healthNotes'] = _healthNotesController.text.trim();
+      }
+      if (_originNotesController.text.trim().isNotEmpty) {
+        itemData['originNotes'] = _originNotesController.text.trim();
+      }
+      if (_careHistoryController.text.trim().isNotEmpty) {
+        itemData['careHistory'] = _careHistoryController.text.trim();
+      }
+      if (_reservePriceController.text.isNotEmpty) {
+        itemData['auction']['reservePrice'] = _parseFormattedNumber(
+          _reservePriceController.text,
+        );
+      }
+      if (_buyNowPriceController.text.isNotEmpty) {
+        itemData['auction']['buyNowPrice'] = _parseFormattedNumber(
+          _buyNowPriceController.text,
+        );
+      }
+
       // Firestore에 저장
+      print('Saving item data to Firestore: $itemData');
       final docRef = await FirebaseService.instance.itemsCollection.add(
         itemData,
       );
+      print('Document created with ID: ${docRef.id}');
 
       // ID 업데이트
       await docRef.update({'id': docRef.id});
+      print('Document ID updated successfully');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -696,11 +717,14 @@ class _ItemUploadPageState extends ConsumerState<ItemUploadPage> {
         context.go('/');
       }
     } catch (e) {
+      print('Error during item registration: $e');
+      print('Stack trace: ${StackTrace.current}');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('등록 중 오류가 발생했습니다: ${e.toString()}'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -711,23 +735,5 @@ class _ItemUploadPageState extends ConsumerState<ItemUploadPage> {
         });
       }
     }
-  }
-
-  Future<List<String>> _uploadImages() async {
-    final List<String> imageUrls = [];
-
-    for (int i = 0; i < _selectedImages.length; i++) {
-      final image = _selectedImages[i];
-      final bytes = _imageBytes[i];
-      final fileName =
-          '${DateTime.now().millisecondsSinceEpoch}_${i}_${image.name}';
-      final ref = FirebaseService.instance.itemsStorageRef.child(fileName);
-
-      await ref.putData(bytes);
-      final url = await ref.getDownloadURL();
-      imageUrls.add(url);
-    }
-
-    return imageUrls;
   }
 }

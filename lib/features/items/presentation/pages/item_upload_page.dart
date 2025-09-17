@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import '../../../../shared/services/firebase_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -42,6 +43,9 @@ class _ItemUploadPageState extends ConsumerState<ItemUploadPage> {
   final List<String> _sizeClasses = ['소형', '중형', '대형', '특대형'];
   final List<String> _shippingMethods = ['pickup', 'courier', 'freight'];
   final List<String> _feePolicies = ['buyer', 'seller', 'split'];
+
+  // 숫자 포맷팅을 위한 NumberFormat
+  final NumberFormat _numberFormat = NumberFormat('#,###');
 
   @override
   void dispose() {
@@ -267,14 +271,17 @@ class _ItemUploadPageState extends ConsumerState<ItemUploadPage> {
                       controller: _startPriceController,
                       decoration: const InputDecoration(
                         labelText: '시작가 (원) *',
-                        hintText: '100000',
+                        hintText: '100,000',
                       ),
                       keyboardType: TextInputType.number,
+                      onChanged: (value) =>
+                          _onPriceChanged(_startPriceController),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return '시작가를 입력해주세요';
                         }
-                        if (int.tryParse(value) == null) {
+                        final cleanValue = value.replaceAll(',', '');
+                        if (int.tryParse(cleanValue) == null) {
                           return '올바른 숫자를 입력해주세요';
                         }
                         return null;
@@ -287,14 +294,16 @@ class _ItemUploadPageState extends ConsumerState<ItemUploadPage> {
                       controller: _bidStepController,
                       decoration: const InputDecoration(
                         labelText: '입찰 단위 (원) *',
-                        hintText: '10000',
+                        hintText: '10,000',
                       ),
                       keyboardType: TextInputType.number,
+                      onChanged: (value) => _onPriceChanged(_bidStepController),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return '입찰 단위를 입력해주세요';
                         }
-                        if (int.tryParse(value) == null) {
+                        final cleanValue = value.replaceAll(',', '');
+                        if (int.tryParse(cleanValue) == null) {
                           return '올바른 숫자를 입력해주세요';
                         }
                         return null;
@@ -312,9 +321,11 @@ class _ItemUploadPageState extends ConsumerState<ItemUploadPage> {
                       controller: _reservePriceController,
                       decoration: const InputDecoration(
                         labelText: '최저가 (원)',
-                        hintText: '500000',
+                        hintText: '500,000',
                       ),
                       keyboardType: TextInputType.number,
+                      onChanged: (value) =>
+                          _onPriceChanged(_reservePriceController),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -323,9 +334,11 @@ class _ItemUploadPageState extends ConsumerState<ItemUploadPage> {
                       controller: _buyNowPriceController,
                       decoration: const InputDecoration(
                         labelText: '즉시구매가 (원)',
-                        hintText: '1000000',
+                        hintText: '1,000,000',
                       ),
                       keyboardType: TextInputType.number,
+                      onChanged: (value) =>
+                          _onPriceChanged(_buyNowPriceController),
                     ),
                   ),
                 ],
@@ -447,6 +460,35 @@ class _ItemUploadPageState extends ConsumerState<ItemUploadPage> {
         context,
       ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
     );
+  }
+
+  // 숫자 포맷팅 메서드들
+  String _formatNumber(String value) {
+    if (value.isEmpty) return '';
+    final cleanValue = value.replaceAll(',', '');
+    final number = int.tryParse(cleanValue);
+    if (number == null) return value;
+    return _numberFormat.format(number);
+  }
+
+  int _parseFormattedNumber(String value) {
+    final cleanValue = value.replaceAll(',', '');
+    return int.tryParse(cleanValue) ?? 0;
+  }
+
+  void _onPriceChanged(TextEditingController controller) {
+    final text = controller.text;
+    final cursorPosition = controller.selection.baseOffset;
+    final formatted = _formatNumber(text);
+
+    if (formatted != text) {
+      controller.value = TextEditingValue(
+        text: formatted,
+        selection: TextSelection.collapsed(
+          offset: cursorPosition + (formatted.length - text.length),
+        ),
+      );
+    }
   }
 
   Widget _buildImageUploadSection() {
@@ -619,12 +661,12 @@ class _ItemUploadPageState extends ConsumerState<ItemUploadPage> {
         }).toList(),
         'status': 'DRAFT',
         'auction': {
-          'startPrice': int.parse(_startPriceController.text),
-          'bidStep': int.parse(_bidStepController.text),
+          'startPrice': _parseFormattedNumber(_startPriceController.text),
+          'bidStep': _parseFormattedNumber(_bidStepController.text),
           if (_reservePriceController.text.isNotEmpty)
-            'reservePrice': int.parse(_reservePriceController.text),
+            'reservePrice': _parseFormattedNumber(_reservePriceController.text),
           if (_buyNowPriceController.text.isNotEmpty)
-            'buyNowPrice': int.parse(_buyNowPriceController.text),
+            'buyNowPrice': _parseFormattedNumber(_buyNowPriceController.text),
           'startsAt': Timestamp.fromDate(_auctionStartDate!),
           'endsAt': Timestamp.fromDate(_auctionEndDate!),
         },

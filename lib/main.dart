@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'shared/services/firebase_service.dart';
+import 'features/auth/data/models/user_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -52,6 +52,7 @@ dependencies:
   # UI Components
   cached_network_image: ^3.4.1
   file_picker: ^8.1.2
+  image_picker: ^1.1.2
   intl: ^0.19.0
 
   # HTTP & Networking

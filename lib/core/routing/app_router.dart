@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/items/presentation/pages/home_page.dart';
 import '../../features/items/presentation/pages/item_detail_page.dart';
+import '../../features/items/presentation/pages/item_upload_page.dart';
+import '../../features/items/presentation/pages/test_data_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/orders/presentation/pages/order_detail_page.dart';
@@ -26,7 +28,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isAdmin = ref.read(isAdminProvider);
 
       // 로그인이 필요한 페이지들
-      final protectedRoutes = ['/profile', '/my-orders', '/my-bids'];
+      final protectedRoutes = ['/profile', '/my-orders', '/my-bids', '/upload'];
       final adminRoutes = ['/admin'];
 
       final isProtectedRoute = protectedRoutes.any(
@@ -62,6 +64,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           final itemId = state.pathParameters['id']!;
           return ItemDetailPage(itemId: itemId);
         },
+      ),
+
+      // 상품 등록 페이지
+      GoRoute(
+        path: '/upload',
+        name: 'upload',
+        builder: (context, state) => const ItemUploadPage(),
+      ),
+      GoRoute(
+        path: '/test-data',
+        name: 'test-data',
+        builder: (context, state) => const TestDataPage(),
       ),
 
       // 인증 관련 페이지

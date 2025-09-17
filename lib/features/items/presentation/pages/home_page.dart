@@ -6,6 +6,7 @@ import '../widgets/item_card.dart';
 import '../../../../shared/widgets/loading_widget.dart';
 import '../../../../shared/widgets/error_widget.dart';
 import '../../../../shared/widgets/empty_widget.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -32,6 +33,22 @@ class _HomePageState extends ConsumerState<HomePage>
 
   @override
   Widget build(BuildContext context) {
+    final isLoggedIn = ref
+        .watch(authStateProvider)
+        .when(
+          data: (user) => user != null,
+          loading: () => false,
+          error: (_, __) => false,
+        );
+
+    // Firebase 연결 테스트
+    final firebaseTest = ref.watch(firebaseConnectionTestProvider);
+    firebaseTest.when(
+      data: (isConnected) => print('Firebase connected: $isConnected'),
+      loading: () => print('Testing Firebase connection...'),
+      error: (error, stack) => print('Firebase connection error: $error'),
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('해담'),
@@ -46,6 +63,12 @@ class _HomePageState extends ConsumerState<HomePage>
             icon: const Icon(Icons.person),
             onPressed: () {
               context.push('/profile');
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.bug_report),
+            onPressed: () {
+              context.push('/test-data');
             },
           ),
         ],
@@ -66,14 +89,25 @@ class _HomePageState extends ConsumerState<HomePage>
           _buildAllItemsTab(),
         ],
       ),
+      floatingActionButton: isLoggedIn
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                context.push('/upload');
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('분재 등록'),
+            )
+          : null,
     );
   }
 
   Widget _buildEndingSoonTab() {
     final endingSoonItems = ref.watch(endingSoonItemsProvider);
+    print('Ending soon items state: ${endingSoonItems.runtimeType}');
 
     return endingSoonItems.when(
       data: (items) {
+        print('Ending soon items data: ${items.length} items');
         if (items.isEmpty) {
           return const EmptyWidget(
             message: '마감 임박인 경매가 없습니다.',
@@ -82,19 +116,28 @@ class _HomePageState extends ConsumerState<HomePage>
         }
         return _buildItemsList(items);
       },
-      loading: () => const LoadingWidget(message: '마감 임박 경매를 불러오는 중...'),
-      error: (error, stack) => AppErrorWidget(
-        message: error.toString(),
-        onRetry: () => ref.invalidate(endingSoonItemsProvider),
-      ),
+      loading: () {
+        print('Ending soon items loading...');
+        return const LoadingWidget(message: '마감 임박 경매를 불러오는 중...');
+      },
+      error: (error, stack) {
+        print('Ending soon error: $error');
+        print('Stack trace: $stack');
+        return AppErrorWidget(
+          message: '데이터를 불러오는 중 오류가 발생했습니다: ${error.toString()}',
+          onRetry: () => ref.invalidate(endingSoonItemsProvider),
+        );
+      },
     );
   }
 
   Widget _buildNewItemsTab() {
     final newItems = ref.watch(newItemsProvider);
+    print('New items state: ${newItems.runtimeType}');
 
     return newItems.when(
       data: (items) {
+        print('New items data: ${items.length} items');
         if (items.isEmpty) {
           return const EmptyWidget(
             message: '새로운 경매가 없습니다.',
@@ -103,19 +146,28 @@ class _HomePageState extends ConsumerState<HomePage>
         }
         return _buildItemsList(items);
       },
-      loading: () => const LoadingWidget(message: '새로운 경매를 불러오는 중...'),
-      error: (error, stack) => AppErrorWidget(
-        message: error.toString(),
-        onRetry: () => ref.invalidate(newItemsProvider),
-      ),
+      loading: () {
+        print('New items loading...');
+        return const LoadingWidget(message: '새로운 경매를 불러오는 중...');
+      },
+      error: (error, stack) {
+        print('New items error: $error');
+        print('Stack trace: $stack');
+        return AppErrorWidget(
+          message: '데이터를 불러오는 중 오류가 발생했습니다: ${error.toString()}',
+          onRetry: () => ref.invalidate(newItemsProvider),
+        );
+      },
     );
   }
 
   Widget _buildAllItemsTab() {
     final allItems = ref.watch(liveItemsProvider);
+    print('All items state: ${allItems.runtimeType}');
 
     return allItems.when(
       data: (items) {
+        print('All items data: ${items.length} items');
         if (items.isEmpty) {
           return const EmptyWidget(
             message: '진행 중인 경매가 없습니다.',
@@ -124,11 +176,18 @@ class _HomePageState extends ConsumerState<HomePage>
         }
         return _buildItemsList(items);
       },
-      loading: () => const LoadingWidget(message: '경매 목록을 불러오는 중...'),
-      error: (error, stack) => AppErrorWidget(
-        message: error.toString(),
-        onRetry: () => ref.invalidate(liveItemsProvider),
-      ),
+      loading: () {
+        print('All items loading...');
+        return const LoadingWidget(message: '경매 목록을 불러오는 중...');
+      },
+      error: (error, stack) {
+        print('All items error: $error');
+        print('Stack trace: $stack');
+        return AppErrorWidget(
+          message: '데이터를 불러오는 중 오류가 발생했습니다: ${error.toString()}',
+          onRetry: () => ref.invalidate(liveItemsProvider),
+        );
+      },
     );
   }
 

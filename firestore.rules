@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() { 
+      return request.auth != null; 
+    }
+    
+    function isAdmin() { 
+      return isSignedIn() && request.auth.token.admin == true; 
+    }
+    
+    function isOwner(uid) { 
+      return isSignedIn() && request.auth.uid == uid; 
+    }
+
+    // 사용자 프로필
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // 분재 아이템
+    match /items/{itemId} {
+      allow read: if true;
+      // 판매자 본인(초안/수정) 또는 관리자 승인/관리
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin()
+        || (isSignedIn() && request.resource.data.sellerId == request.auth.uid
+            && resource.data.status in ['DRAFT', 'SCHEDULED']);
+    }
+
+    // 입찰 - Cloud Function을 통해서만 허용
+    match /items/{itemId}/bids/{bidId} {
+      allow read: if true;
+      allow create, update, delete: if false;
+    }
+
+    // 주문 - Cloud Function을 통해서만 허용
+    match /orders/{orderId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.buyerId == request.auth.uid);
+      allow create, update, delete: if false;
+    }
+
+    // 은행 입금 트랜잭션
+    match /bankTx/{txId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // 감사 로그
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // 신고
+    match /reports/{reportId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.reporterId == request.auth.uid);
+      allow create: if isSignedIn();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

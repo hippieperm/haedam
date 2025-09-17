@@ -116,12 +116,6 @@ class _HomePageState extends ConsumerState<HomePage>
                 context.push('/profile');
               },
             ),
-            IconButton(
-              icon: const Icon(Icons.bug_report),
-              onPressed: () {
-                context.push('/test-data');
-              },
-            ),
           ],
         ],
         bottom: PreferredSize(

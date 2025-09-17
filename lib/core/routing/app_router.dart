@@ -4,7 +4,6 @@ import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/items/presentation/pages/home_page.dart';
 import '../../features/items/presentation/pages/item_detail_page.dart';
 import '../../features/items/presentation/pages/item_upload_page.dart';
-import '../../features/items/presentation/pages/test_data_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/orders/presentation/pages/order_detail_page.dart';
@@ -71,11 +70,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/upload',
         name: 'upload',
         builder: (context, state) => const ItemUploadPage(),
-      ),
-      GoRoute(
-        path: '/test-data',
-        name: 'test-data',
-        builder: (context, state) => const TestDataPage(),
       ),
 
       // 인증 관련 페이지
